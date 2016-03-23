@@ -1,5 +1,5 @@
 #!/bin/zsh
-UserSyncVersion="1.9"
+UserSyncVersion="1.10"
 
 INSTALL_DIR=##INSTALL_DIR##
 
@@ -81,7 +81,7 @@ calculeDuree() {
 		let ENDM=ENDM+60
 		let ENDH=ENDH-1
 	}
-	let RESULT=(ENDH-STARTH)*60+ENDM-STARTM
+	let 'RESULT=(ENDH-STARTH)*60+ENDM-STARTM'
 	echo $RESULT
 }
 
