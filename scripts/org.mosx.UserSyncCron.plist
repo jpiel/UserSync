@@ -9,7 +9,7 @@
 		<string>##INSTALL_DIR##/bin/launchUserSync.sh</string>
 	</array>
 	<key>StartInterval</key>
-	<integer>1800</integer>
+	<integer>3300</integer>
 	<key>RunAtLoad</key>
 	<true/>
 	<key>AbandonProcessGroup</key>

@@ -1,5 +1,5 @@
 #!/bin/zsh
-UserSyncVersion="1.10"
+UserSyncVersion="1.11"
 
 INSTALL_DIR=##INSTALL_DIR##
 
@@ -40,6 +40,8 @@ fi
 RSYNCMAXSIZE="--max-size=${RSYNCSPLITSIZE}"
 RSYNCMINSIZE="--min-size=${RSYNCSPLITSIZE}-1"
 
+RSYNCVER=$(${INSTALL_DIR}/bin/rsync3 --version |/usr/bin/head -1)
+
 ##############################################################################
 ##############################################################################
 
@@ -52,6 +54,7 @@ emailAlert() {
   echo -ne "To: ${EMAILADMIN}\r\n" >>  /tmp/sendMail.$$
   echo -ne "Subject: Alerte UserSync sur $(hostname) : ${1}\r\n" >>  /tmp/sendMail.$$
   echo -ne "\r\n" >>  /tmp/sendMail.$$
+  echo -ne "${RSYNCVER}\r\n\r\n" >>  /tmp/sendMail.$$
   msgFile=""
   [ $# -ge 3 ] && [ "$3" = "-file" ] && msgFile=${2}
   if [ -z "$msgFile" ]
