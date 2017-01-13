@@ -1,5 +1,5 @@
 #!/bin/zsh
-UserSyncVersion="1.11"
+UserSyncVersion="1.12"
 
 INSTALL_DIR=##INSTALL_DIR##
 
@@ -39,6 +39,9 @@ fi
 [ -z "$RSYNCSPLITSIZE" ] && RSYNCSPLITSIZE="500M"
 RSYNCMAXSIZE="--max-size=${RSYNCSPLITSIZE}"
 RSYNCMINSIZE="--min-size=${RSYNCSPLITSIZE}-1"
+
+[ -z "$NBMAXRSYNC" ] && NBMAXRSYNC=4
+[ -z "$SRVSEMPATH" ] && SRVSEMPATH=/tmp/userSyncSem
 
 RSYNCVER=$(${INSTALL_DIR}/bin/rsync3 --version |/usr/bin/head -1)
 
@@ -86,6 +89,31 @@ calculeDuree() {
 	}
 	let 'RESULT=(ENDH-STARTH)*60+ENDM-STARTM'
 	echo $RESULT
+}
+
+
+testNBRSync() {
+	SEMFILE="${SRVSEMPATH}/"$(hostname)"--"$(id -un)
+	
+	NBRSYNC=$(ssh ${SYNCSERVER} "ps auxwww |grep 'rsync3 --server' |wc -l")
+	let NBRSYNC=NBRSYNC/2
+
+	ssh ${SYNCSERVER} "test -d ${SRVSEMPATH} || mkdir ${SRVSEMPATH}"
+	ssh ${SYNCSERVER} "test -f ${SEMFILE} && rm -f ${SEMFILE}"
+	NB_SEM=${ssh ${SYNCSERVER} "ls -1 ${SRVSEMPATH}/* |wc -l"}
+	
+	[ $NBRSYNC -ge $NBMAXRSYNC ] || [ $NB_SEM -gt 0 ] && {
+		let NB_SEM=NB_SEM+1
+		ssh ${SYNCSERVER} "echo $NB_SEM >${SEMFILE}"
+	}
+	
+	let SLEEPTIME=(NBRSYNC+NB_SEM)*60
+	while [ $NBRSYNC -ge $NBMAXRSYNC ] {
+		sleep $SLEEPTIME
+		NBRSYNC=$(ssh ${SYNCSERVER} "ps auxwww |grep 'rsync3 --server' |wc -l")
+		let NBRSYNC=NBRSYNC/2
+	}
+	ssh ${SYNCSERVER} "test -f ${SEMFILE} && rm -f ${SEMFILE}"
 }
 
 SEMERRMSG="La synchronisation semble bloquee pour $(id -un),
@@ -177,13 +205,13 @@ EXCLFILE=$(echo ~/.UserSync/exclude-list)
 
 ## Lancement de la synchro
 # tester option --skip-compress=gz/bz2/jpg/jpeg/ogg/mp3/mp4/mov/avi/vmdk/vmem pour amŽliorer traitement des compressŽs
+echo "##### Syncro ${RSYNCMINSIZE} #####" >>~/.UserSync/UserSync.log
+RSYNCCMD="${INSTALL_DIR}/bin/rsync3 --rsync-path=/usr/local/bin/rsync3 ${RSYNCOPTS} ${RSYNCRSH} ${RSYNCINPLACE} ${RSYNCBIGTIMEOUT} ${RSYNCEXCLUDES} --exclude-from=${EXCLFILE} ${RSYNCMINSIZE} ~/ ${SYNCSERVER}:./ >>~/.UserSync/UserSync.log  2>&1"
+eval $RSYNCCMD
+rsyncerr=$?
+echo "" >>~/.UserSync/UserSync.log
 echo "##### Syncro ${RSYNCMAXSIZE} #####" >~/.UserSync/UserSync.log
 RSYNCCMD="${INSTALL_DIR}/bin/rsync3 --rsync-path=/usr/local/bin/rsync3 ${RSYNCOPTS} ${RSYNCRSH} ${RSYNCZ} ${RSYNCINPLACE} ${RSYNCTIMEOUT} ${RSYNCEXCLUDES} --exclude-from=${EXCLFILE} ${RSYNCMAXSIZE} ~/ ${SYNCSERVER}:./ >>~/.UserSync/UserSync.log  2>&1"
-eval $RSYNCCMD
-echo "" >>~/.UserSync/UserSync.log
-echo "##### Syncro ${RSYNCMINSIZE} #####" >>~/.UserSync/UserSync.log
-rsyncerr=$?
-RSYNCCMD="${INSTALL_DIR}/bin/rsync3 --rsync-path=/usr/local/bin/rsync3 ${RSYNCOPTS} ${RSYNCRSH} ${RSYNCINPLACE} ${RSYNCBIGTIMEOUT} ${RSYNCEXCLUDES} --exclude-from=${EXCLFILE} ${RSYNCMINSIZE} ~/ ${SYNCSERVER}:./ >>~/.UserSync/UserSync.log  2>&1"
 eval $RSYNCCMD
 rsyncerr2=$?
 [ $rsyncerr -eq 0 ] && [ $rsyncerr2 -ne 0 ] && rsyncerr=$rsyncerr2
