@@ -1,5 +1,5 @@
 #!/bin/zsh
-UserSyncVersion="1.12"
+UserSyncVersion="1.13"
 
 INSTALL_DIR=##INSTALL_DIR##
 
@@ -93,26 +93,29 @@ calculeDuree() {
 
 
 testNBRSync() {
-	SEMFILE="${SRVSEMPATH}/"$(hostname)"--"$(id -un)
+	SEMFILE="${SRVSEMPATH}/$(hostname)--$(id -un)"
 	
 	NBRSYNC=$(ssh ${SYNCSERVER} "ps auxwww |grep 'rsync3 --server' |wc -l")
 	let NBRSYNC=NBRSYNC/2
 
 	ssh ${SYNCSERVER} "test -d ${SRVSEMPATH} || mkdir ${SRVSEMPATH}"
 	ssh ${SYNCSERVER} "test -f ${SEMFILE} && rm -f ${SEMFILE}"
-	NB_SEM=${ssh ${SYNCSERVER} "ls -1 ${SRVSEMPATH}/* |wc -l"}
+	NB_SEM=$(echo $(ssh ${SYNCSERVER} "ls -1 ${SRVSEMPATH}/* 2>/dev/null |wc -l"))
 	
 	[ $NBRSYNC -ge $NBMAXRSYNC ] || [ $NB_SEM -gt 0 ] && {
 		let NB_SEM=NB_SEM+1
 		ssh ${SYNCSERVER} "echo $NB_SEM >${SEMFILE}"
 	}
 	
-	let SLEEPTIME=(NBRSYNC+NB_SEM)*60
-	while [ $NBRSYNC -ge $NBMAXRSYNC ] {
+	let SLEEPTIME=1+NB_SEM
+	let SLEEPTIME=SLEEPTIME\*60
+	while [ $NBRSYNC -ge $NBMAXRSYNC ]
+	do
+		echo "##### Trop de rsync sur le serveur, on patiente ${SLEEPTIME}s #####" >>~/.UserSync/UserSync.log
 		sleep $SLEEPTIME
 		NBRSYNC=$(ssh ${SYNCSERVER} "ps auxwww |grep 'rsync3 --server' |wc -l")
 		let NBRSYNC=NBRSYNC/2
-	}
+	done
 	ssh ${SYNCSERVER} "test -f ${SEMFILE} && rm -f ${SEMFILE}"
 }
 
@@ -198,6 +201,8 @@ _35..Timeout waiting for daemon connection
 echo 1 >~/.UserSync/Semaphore
 
 [ ${LOGHISTORY} -eq 1 ] && echo $(date "+%Y-%m-%d--%H:%M:%S : ")OK Debut >>~/.UserSync/History.log
+
+testNBRSync
 
 # Verification que le fichier d'exclusion existe :
 EXCLFILE=$(echo ~/.UserSync/exclude-list)
