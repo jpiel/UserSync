@@ -1,5 +1,5 @@
 #!/bin/zsh
-UserSyncVersion="1.13"
+UserSyncVersion="1.14"
 
 INSTALL_DIR=##INSTALL_DIR##
 
@@ -37,8 +37,14 @@ fi
 [ -z "$RSYNCRSH" ] && RSYNCRSH='--rsh="ssh -T -c arcfour -o Compression=no -x"'
 
 [ -z "$RSYNCSPLITSIZE" ] && RSYNCSPLITSIZE="500M"
-RSYNCMAXSIZE="--max-size=${RSYNCSPLITSIZE}"
-RSYNCMINSIZE="--min-size=${RSYNCSPLITSIZE}-1"
+if [ "$RSYNCSPLITSIZE" = "0" ]
+	then
+	RSYNCMAXSIZE="--max-size=${RSYNCSPLITSIZE}"
+	RSYNCMINSIZE="--min-size=${RSYNCSPLITSIZE}-1"
+else
+	RSYNCMAXSIZE=""
+	RSYNCMINSIZE=""
+fi
 
 [ -z "$NBMAXRSYNC" ] && NBMAXRSYNC=4
 [ -z "$SRVSEMPATH" ] && SRVSEMPATH=/tmp/userSyncSem
@@ -210,16 +216,23 @@ EXCLFILE=$(echo ~/.UserSync/exclude-list)
 
 ## Lancement de la synchro
 # tester option --skip-compress=gz/bz2/jpg/jpeg/ogg/mp3/mp4/mov/avi/vmdk/vmem pour amŽliorer traitement des compressŽs
-echo "##### Syncro ${RSYNCMINSIZE} #####" >>~/.UserSync/UserSync.log
+if [ "$RSYNCSPLITSIZE" = "0" ]
+	then
+	echo "##### Syncro $(date) #####" >~/.UserSync/UserSync.log
+else
+	echo "##### Syncro ${RSYNCMINSIZE} $(date) #####" >~/.UserSync/UserSync.log
+fi
 RSYNCCMD="${INSTALL_DIR}/bin/rsync3 --rsync-path=/usr/local/bin/rsync3 ${RSYNCOPTS} ${RSYNCRSH} ${RSYNCINPLACE} ${RSYNCBIGTIMEOUT} ${RSYNCEXCLUDES} --exclude-from=${EXCLFILE} ${RSYNCMINSIZE} ~/ ${SYNCSERVER}:./ >>~/.UserSync/UserSync.log  2>&1"
 eval $RSYNCCMD
 rsyncerr=$?
 echo "" >>~/.UserSync/UserSync.log
-echo "##### Syncro ${RSYNCMAXSIZE} #####" >~/.UserSync/UserSync.log
-RSYNCCMD="${INSTALL_DIR}/bin/rsync3 --rsync-path=/usr/local/bin/rsync3 ${RSYNCOPTS} ${RSYNCRSH} ${RSYNCZ} ${RSYNCINPLACE} ${RSYNCTIMEOUT} ${RSYNCEXCLUDES} --exclude-from=${EXCLFILE} ${RSYNCMAXSIZE} ~/ ${SYNCSERVER}:./ >>~/.UserSync/UserSync.log  2>&1"
-eval $RSYNCCMD
-rsyncerr2=$?
-[ $rsyncerr -eq 0 ] && [ $rsyncerr2 -ne 0 ] && rsyncerr=$rsyncerr2
+[ "$RSYNCSPLITSIZE" = "0" ] || {
+	echo "##### Syncro ${RSYNCMAXSIZE} #####" >>~/.UserSync/UserSync.log
+	RSYNCCMD="${INSTALL_DIR}/bin/rsync3 --rsync-path=/usr/local/bin/rsync3 ${RSYNCOPTS} ${RSYNCRSH} ${RSYNCZ} ${RSYNCINPLACE} ${RSYNCTIMEOUT} ${RSYNCEXCLUDES} --exclude-from=${EXCLFILE} ${RSYNCMAXSIZE} ~/ ${SYNCSERVER}:./ >>~/.UserSync/UserSync.log  2>&1"
+	eval $RSYNCCMD
+	rsyncerr2=$?
+	[ $rsyncerr -eq 0 ] && [ $rsyncerr2 -ne 0 ] && rsyncerr=$rsyncerr2
+}
 [ $rsyncerr -eq 0 ] || {
 	if [ $rsyncerr -eq 24 ]
 	then
