@@ -1,5 +1,5 @@
 #!/bin/zsh
-UserSyncVersion="1.15"
+UserSyncVersion="1.16"
 
 INSTALL_DIR=##INSTALL_DIR##
 
@@ -63,6 +63,7 @@ emailAlert() {
   echo -ne "To: ${EMAILADMIN}\r\n" >>  /tmp/sendMail.$$
   echo -ne "Subject: Alerte UserSync sur $(hostname) : ${1}\r\n" >>  /tmp/sendMail.$$
   echo -ne "\r\n" >>  /tmp/sendMail.$$
+  echo -ne "UserSync : ${UserSyncVersion}\r\n" >>  /tmp/sendMail.$$
   echo -ne "${RSYNCVER}\r\n\r\n" >>  /tmp/sendMail.$$
   msgFile=""
   [ $# -ge 3 ] && [ "$3" = "-file" ] && msgFile=${2}
@@ -114,7 +115,10 @@ testNBRSync() {
 	}
 	
 	let SLEEPTIME=1+NB_SEM
-	let SLEEPTIME=SLEEPTIME\*60
+	#let SLEEPTIME=SLEEPTIME\*60
+	NB_WAIT=$(ssh ${SYNCSERVER} "find ${SRVSEMPATH} -type f -mtime -6h |wc -l")
+	let SLEEPTIME=SLEEPTIME\*NB_WAIT
+	
 	while [ $NBRSYNC -ge $NBMAXRSYNC ]
 	do
 		echo "##### Trop de rsync sur le serveur, on patiente ${SLEEPTIME}s #####" >>~/.UserSync/UserSync.log
