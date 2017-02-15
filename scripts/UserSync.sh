@@ -1,5 +1,5 @@
 #!/bin/zsh
-UserSyncVersion="1.14"
+UserSyncVersion="1.15"
 
 INSTALL_DIR=##INSTALL_DIR##
 
@@ -37,7 +37,7 @@ fi
 [ -z "$RSYNCRSH" ] && RSYNCRSH='--rsh="ssh -T -c arcfour -o Compression=no -x"'
 
 [ -z "$RSYNCSPLITSIZE" ] && RSYNCSPLITSIZE="500M"
-if [ "$RSYNCSPLITSIZE" = "0" ]
+if [ "$RSYNCSPLITSIZE" != "0" ]
 	then
 	RSYNCMAXSIZE="--max-size=${RSYNCSPLITSIZE}"
 	RSYNCMINSIZE="--min-size=${RSYNCSPLITSIZE}-1"
