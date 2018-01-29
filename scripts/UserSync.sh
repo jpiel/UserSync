@@ -1,5 +1,5 @@
 #!/bin/zsh
-UserSyncVersion="1.16"
+UserSyncVersion="1.17"
 
 INSTALL_DIR=##INSTALL_DIR##
 
@@ -34,7 +34,7 @@ fi
 
 [ -z "$RSYNCOPTS" ] && RSYNCOPTS="-aHXxvE --stats --numeric-ids --delete-excluded --delete-before --human-readable"
 
-[ -z "$RSYNCRSH" ] && RSYNCRSH='--rsh="ssh -T -c arcfour -o Compression=no -x"'
+[ -z "$RSYNCRSH" ] && RSYNCRSH='--rsh="ssh -T -c aes128-ctr -o Compression=no -x"'
 
 [ -z "$RSYNCSPLITSIZE" ] && RSYNCSPLITSIZE="500M"
 if [ "$RSYNCSPLITSIZE" != "0" ]
