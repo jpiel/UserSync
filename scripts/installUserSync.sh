@@ -22,9 +22,8 @@ CURRENT_DIR=$(dirname $0)
 INSTALL_DIR="/usr/local"
 WITH_INSTALL=1
 INSTALL_ONLY=0
-INIT_CONF=0
 
-[ $# -gt 0 ] && [ $1 = "-config" ] && {
+[ $# -gt 0 ] && [ $1 = "-activateUser" ] && {
   WITH_INSTALL=0
 }
 
@@ -32,22 +31,8 @@ INIT_CONF=0
   INSTALL_ONLY=1
 }
 
-[ $# -gt 0 ] && [ $1 = "-initconf" ] && {
-  INIT_CONF=1
-  INIT_USERS=1
-  WITH_INSTALL=0
-  INSTALL_ONLY=1
-}
-
-[ $# -gt 0 ] && [ $1 = "-initconfWOusers" ] && {
-  INIT_CONF=1
-  INIT_USERS=0
-  WITH_INSTALL=0
-  INSTALL_ONLY=1
-}
-
 [ $# -gt 0 ] && {
-  [ $1 != "-installonly" ] && [ $1 != "-config" ] && [ $1 != "-initconf" ] && [ $1 != "-initconfWOusers" ] && echo "Mauvais parametres..." && exit 1
+  [ $1 != "-installonly" ] && [ $1 != "-activateUser" ] && echo "Mauvais parametres..." && exit 1
 }
 
 ### PARTIE 1 ***
@@ -67,9 +52,14 @@ INIT_CONF=0
   sudo sed "s&##INSTALL_DIR##&${INSTALL_DIR}&g" ${CURRENT_DIR}/checkUserSync.sh > ${INSTALL_DIR}/bin/checkUserSync.sh
   chmod 755 ${INSTALL_DIR}/bin/checkUserSync.sh
   sudo cp ${CURRENT_DIR}/rsync3 ${INSTALL_DIR}/bin/
-	# On installe le fichier de config par defaut et si il n'y en a pas deja un, on l'active
-  sudo sed "s&##INSTALL_DIR##&${INSTALL_DIR}&g" ${CURRENT_DIR}/UserSync.conf >${INSTALL_DIR}/etc/UserSync.conf.orig
-  [ -f ${INSTALL_DIR}/etc/UserSync.conf ] || cp ${INSTALL_DIR}/etc/UserSync.conf.orig ${INSTALL_DIR}/etc/UserSync.conf
+	# On installe les fichiers de config
+  [ -f ${INSTALL_DIR}/etc/UserSync.conf ] && {
+        diff /usr/local/etc/UserSync.conf.orig /usr/local/etc/UserSync.conf |grep -e "^> " |grep -v RSYNCRSH | cut -d\  -f2- >/usr/local/etc/UserSync.conf.local
+  }
+  sudo sed "s&##INSTALL_DIR##&${INSTALL_DIR}&g" ${CURRENT_DIR}/UserSync.conf >${INSTALL_DIR}/etc/UserSync.conf.default
+  cp ${CURRENT_DIR}/etc/UserSync.conf.srv ${INSTALL_DIR}/etc/UserSync.conf.srv
+  [ -f ${INSTALL_DIR}/etc/UserSync.conf.local ] || cp ${CURRENT_DIR}/etc/UserSync.conf.local ${INSTALL_DIR}/etc/UserSync.conf.local
+    
 	# On met en place le launchAgent systeme.
   [ -f /Library/LaunchAgents/org.mosx.UserSyncConfig.plist ] && sudo launchctl unload -w /Library/LaunchAgents/org.mosx.UserSyncConfig.plist
   sudo sed "s&##INSTALL_DIR##&${INSTALL_DIR}&g" ${CURRENT_DIR}/org.mosx.UserSyncConfig.plist >/Library/LaunchAgents/org.mosx.UserSyncConfig.plist
@@ -82,17 +72,6 @@ INIT_CONF=0
   sudo sed "s&##INSTALL_DIR##&${INSTALL_DIR}&g" ${CURRENT_DIR}/org.mosx.UserSyncCron.plist >${INSTALL_DIR}/etc/org.mosx.UserSyncCron.plist
 }
 
-### PARTIR 1bis ***
-# Si INIT_CONF est defini, on rempalce le fichier de conf par celui par defaut.
-[ $INIT_CONF -eq 1 ] && {
-	. ${INSTALL_DIR}/etc/UserSync.conf
-	if [ $INIT_USERS -eq 0 ]
-		then
-		cat ${INSTALL_DIR}/etc/UserSync.conf.orig |sed -e "s/EXCLUDEDUSERS\=.*/EXCLUDEDUSERS\=${EXCLUDEDUSERS}/" > ${INSTALL_DIR}/etc/UserSync.conf
-	else
-		cat ${INSTALL_DIR}/etc/UserSync.conf.orig > ${INSTALL_DIR}/etc/UserSync.conf
-	fi
-}
 ################
 # Si parametre -installonly utilise, on arrete lˆ
 [ $INSTALL_ONLY -eq 1 ] && exit 0
@@ -128,6 +107,4 @@ cp ${INSTALL_DIR}/etc/org.mosx.UserSyncCron.plist  ~/Library/LaunchAgents/org.mo
 launchctl load -w ~/Library/LaunchAgents/org.mosx.UserSyncCron.plist
 
 ################
-
-
 

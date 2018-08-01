@@ -7,7 +7,9 @@
 
 
 INSTALL_DIR=/usr/local
-. ${INSTALL_DIR}/etc/UserSync.conf
+. ${INSTALL_DIR}/etc/UserSync.conf.default
+. ${INSTALL_DIR}/etc/UserSync.conf.srv
+. ${INSTALL_DIR}/etc/UserSync.conf.local
 
 emailAlert() {
   echo -ne "HELO ${MAILHOST}\r\n" > /tmp/sendMail.$$

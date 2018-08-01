@@ -30,7 +30,7 @@ Then you can simply install all the scripts by launching the following command :
 UserSync needs to be activated for each user on the computer you want to sync with the server. If you don't want to sync some local users, UserSync will warn you by email, and you have to put their name in the config file.
 
 To activate UserSync for one user, login as this user, then launch the following command :
-`/usr/local/bin/installUserSync.sh -config`
+`/usr/local/bin/installUserSync.sh -activateUser`
 
 This will ask for the user password to copy the ssh keys to the server.
 
@@ -65,4 +65,11 @@ Here are a few things that need to be improved :
 ## History
 
 1.10 : Correction in the function calculeDelais() that indicate the number of minutes the script was blocked.
-
+1.11 : Add the version of rsync to the email report.
+1.12 : Optimisation with big files and nb max of rsync
+1.13 : Bugs fixs
+1.14 : Allow to not split for big files if needed
+1.15 : Bugs fixs
+1.16 : Changes in Sleep Time calculation
+1.17 : Change in ssh compressions options. 
+1.18 : Big changes in log files. Rewrite of config files management.
