@@ -3,7 +3,7 @@
 # Ce script recupere la liste des utilisateurs locaux en regardant les dossiers presents dans /Users
 # Pour tous les utilisateurs qui ne sont pas exclus dans le fichier de configuration (EXCLUDEDUSERS),
 # on verifie si le launchAgent utilisateur a ete installe.
-# Si il n'est pas installe, on envoie un email ˆ l'adresse EmailAdmin
+# Si il n'est pas installe, on envoie un email a l'adresse EmailAdmin
 
 
 INSTALL_DIR=/usr/local

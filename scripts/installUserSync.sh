@@ -51,14 +51,13 @@ INSTALL_ONLY=0
   chmod 755 ${INSTALL_DIR}/bin/UserSync.sh
   sudo sed "s&##INSTALL_DIR##&${INSTALL_DIR}&g" ${CURRENT_DIR}/checkUserSync.sh > ${INSTALL_DIR}/bin/checkUserSync.sh
   chmod 755 ${INSTALL_DIR}/bin/checkUserSync.sh
-  sudo cp ${CURRENT_DIR}/rsync3 ${INSTALL_DIR}/bin/
 	# On installe les fichiers de config
   [ -f ${INSTALL_DIR}/etc/UserSync.conf ] && {
-        diff /usr/local/etc/UserSync.conf.orig /usr/local/etc/UserSync.conf |grep -e "^> " |grep -v RSYNCRSH | cut -d\  -f2- >/usr/local/etc/UserSync.conf.local
+        diff ${INSTALL_DIR}/etc/UserSync.conf.orig ${INSTALL_DIR}/etc/UserSync.conf |grep -e "^> " |grep -v RSYNCRSH | cut -d\  -f2- >${INSTALL_DIR}/etc/UserSync.conf.local
   }
-  sudo sed "s&##INSTALL_DIR##&${INSTALL_DIR}&g" ${CURRENT_DIR}/UserSync.conf >${INSTALL_DIR}/etc/UserSync.conf.default
-  cp ${CURRENT_DIR}/etc/UserSync.conf.srv ${INSTALL_DIR}/etc/UserSync.conf.srv
-  [ -f ${INSTALL_DIR}/etc/UserSync.conf.local ] || cp ${CURRENT_DIR}/etc/UserSync.conf.local ${INSTALL_DIR}/etc/UserSync.conf.local
+  sudo sed "s&##INSTALL_DIR##&${INSTALL_DIR}&g" ${CURRENT_DIR}/UserSync.conf.default >${INSTALL_DIR}/etc/UserSync.conf.default
+  sudo cp ${CURRENT_DIR}/UserSync.conf.srv ${INSTALL_DIR}/etc/UserSync.conf.srv
+  [ -f ${INSTALL_DIR}/etc/UserSync.conf.local ] || sudo cp ${CURRENT_DIR}/UserSync.conf.local ${INSTALL_DIR}/etc/UserSync.conf.local
     
 	# On met en place le launchAgent systeme.
   [ -f /Library/LaunchAgents/org.mosx.UserSyncConfig.plist ] && sudo launchctl unload -w /Library/LaunchAgents/org.mosx.UserSyncConfig.plist

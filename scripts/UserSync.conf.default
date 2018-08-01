@@ -21,7 +21,7 @@ RSYNCRSH='--rsh="ssh -T -c chacha20-poly1305@openssh.com,aes128-gcm@openssh.com,
 
 # C'est la taille a partir de laquelle on separe les synchros, on ne fait pas de compression pour les plus gros
 # On n'utilise pas le meme TIMEOUT
-RSYNCSPLITSIZE="500M"
+RSYNCSPLITSIZE=500
 
 NBMAXRSYNC=4
 SRVSEMPATH=/tmp/userSyncSem

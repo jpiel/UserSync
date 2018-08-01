@@ -16,7 +16,7 @@ INSTALL_DIR=##INSTALL_DIR##
 CONFIGERR=0
 #####################################
 # Definition des valeurs par defaut :
-[ -z "$NORSYNCZ" ] && CONFIGERR=1
+[ -z "$NORSYNCZ" ] && [ -z "$RSYNCZ" ] && CONFIGERR=1
 [ -z "$RSYNCTIMEOUT" ] && CONFIGERR=1
 [ -z "$RSYNCBIGTIMEOUT" ] && CONFIGERR=1
 [ -z "$RSYNCINPLACE" ] && CONFIGERR=1
@@ -43,8 +43,9 @@ fi
 
 if [ "$RSYNCSPLITSIZE" != "0" ]
 	then
-	RSYNCMAXSIZE="--max-size=${RSYNCSPLITSIZE}"
-	RSYNCMINSIZE="--min-size=${RSYNCSPLITSIZE}-1"
+	RSYNCMAXSIZE="--max-size=${RSYNCSPLITSIZE}M"
+	let MINSIZE=RSYNCSPLITSIZE-1
+	RSYNCMINSIZE="--min-size=${MINSIZE}M"
 else
 	RSYNCMAXSIZE=""
 	RSYNCMINSIZE=""
@@ -170,7 +171,7 @@ _35..Timeout waiting for daemon connection
 /sbin/ifconfig |grep -q ${BROADCAST_IP} 2>/dev/null
 if [ $? -eq 0 ]
 then
-      # Si on est bien dans le bon sous-rŽseau, on peut tester le serveur
+      # Si on est bien dans le bon sous-reseau, on peut tester le serveur
     /usr/bin/ssh ${SYNCSERVER} -o NumberOfPasswordPrompts=0 -q echo >/dev/null
     [ $? -eq 0 ] || {
       ## On ping le serveur pour verifier si il est bien present. Si present, on a un probleme d'acces
@@ -200,7 +201,7 @@ then
         echo $mysemnb >~/.UserSync/Semaphore
         [ ${LOGHISTORY} -eq 1 ] && echo $(date "+%Y-%m-%d--%H:%M:%S : ")Semaphore present >>~/.UserSync/History.log
   
-        ## Si $mysemnb est superieur ˆ NBTRYSEMAPHORE on envoie un mail d'alerte
+        ## Si $mysemnb est superieur a NBTRYSEMAPHORE on envoie un mail d'alerte
         [ $mysemnb -ge ${NBTRYSEMAPHORE} ] && {
           CURTIME=$(date "+%H:%M")
           SEMTIME=$(stat -f "%SB" -t "%H:%M" ~/.UserSync/Semaphore)
@@ -269,7 +270,7 @@ then
           nblines=$(echo $(ls -1 ~/.UserSync/errs.* |wc -l))
           [ $nblines -gt 0 ] && {
                 echo "###########################"  >> ~/.UserSync/email.log
-                echo "##  Logs prŽcŽdents      ##"  >> ~/.UserSync/email.log
+                echo "##  Logs precedents      ##"  >> ~/.UserSync/email.log
                 echo "###########################"  >> ~/.UserSync/email.log
                 echo  >> ~/.UserSync/email.log          
                 cat ~/.UserSync/errs.* >> ~/.UserSync/email.log
@@ -284,7 +285,6 @@ then
 
           echo $(date "+%Y-%m-%d--%H:%M:%S :") Erreur $rsyncerr > ~/.UserSync/errs.${DATEJOUR}.log
           echo "" >> ~/.UserSync/errs.${DATEJOUR}.log
-          }
         fi
     }
 
@@ -304,7 +304,7 @@ then
     rm -f ~/.UserSync/Semaphore
 
 else
-    ## On n'est pas sur le bon rŽseau, donc si un semaphore existe, il faut le supprimer car il ne peut y avoir de synchro en cours.
+    ## On n'est pas sur le bon reseau, donc si un semaphore existe, il faut le supprimer car il ne peut y avoir de synchro en cours.
     [ -f ~/.UserSync/Semaphore ] && rm -f ~/.UserSync/Semaphore
             
     [ ${LOGHISTORY} -eq 1 ] && echo $(date "+%Y-%m-%d--%H:%M:%S : ")Serveur Injoignable >>~/.UserSync/History.log
